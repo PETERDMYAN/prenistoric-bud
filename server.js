@@ -17,7 +17,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ---- Game constants ----
 const GRID = 10; // 10x10 board
 const TARGET_START = 30; // gems needed to clear before reward boxes
-const COIN_GOAL = 300; // first to this many coins wins
+const MATCH_MS = 120000; // 2-minute match; most coins when time runs out wins
 const TRAY_SIZE = 3; // pieces offered at a time
 const FREEZE_MS = 15000; // steal freeze duration
 
@@ -131,7 +131,7 @@ function pushState(room) {
     p.socket.emit('state', {
       you: playerView(p, true),
       opponent: opp ? playerView(opp, false) : null,
-      coinGoal: COIN_GOAL,
+      endsAt: room.endsAt || null,
       grid: GRID,
       over: room.over || null,
     });
@@ -255,17 +255,40 @@ function resolveSteal(room, player, budId) {
 }
 
 function finishBox(room, player) {
-  // Check win
-  if (player.coins >= COIN_GOAL && !room.over) {
-    room.over = { winnerBud: player.bud, coins: player.coins };
-    room.players.forEach(p => { p.phase = 'done'; });
-    pushState(room);
-    return;
-  }
-  // Continue playing: reset target, fresh tray.
+  if (room.over) return;
+  // Reward collected — back to play with a fresh target and tray.
   player.phase = 'playing';
   player.target = TARGET_START;
   player.tray = newTray();
+  pushState(room);
+}
+
+// Begin the 2-minute clock once both players have chosen a bud.
+function startMatchIfReady(room) {
+  if (room.endsAt || room.over) return;
+  if (room.players.length === 2 && room.players.every(p => p.bud)) {
+    room.endsAt = Date.now() + MATCH_MS;
+    room.timer = setTimeout(() => endGame(room, 'timeUp'), MATCH_MS);
+  }
+}
+
+// End the match and decide the winner by coin count (tie = draw).
+function endGame(room, reasonCode, extra = {}) {
+  if (room.over) return;
+  clearTimeout(room.timer);
+  const [a, b] = room.players;
+  let winnerBud = null, tie = false;
+  if (a.coins > b.coins) winnerBud = a.bud;
+  else if (b.coins > a.coins) winnerBud = b.bud;
+  else tie = true;
+  room.over = {
+    winnerBud,
+    coins: Math.max(a.coins, b.coins),
+    reasonCode,
+    tie,
+    ...extra,
+  };
+  room.players.forEach(p => { p.phase = 'done'; });
   pushState(room);
 }
 
@@ -278,7 +301,7 @@ io.on('connection', (socket) => {
       const roomId = 'r' + (++roomSeq);
       const p1 = makePlayer(waiting);
       const p2 = makePlayer(socket);
-      const room = { id: roomId, players: [p1, p2], over: null };
+      const room = { id: roomId, players: [p1, p2], over: null, endsAt: null, timer: null };
       rooms.set(roomId, room);
       p1.socket.data.room = roomId; p1.socket.data.player = p1;
       p2.socket.data.room = roomId; p2.socket.data.player = p2;
@@ -299,6 +322,7 @@ io.on('connection', (socket) => {
     if (!bud) return;
     player.bud = bud;
     player.phase = 'playing';
+    startMatchIfReady(room);
     pushState(room);
   });
 
@@ -309,16 +333,11 @@ io.on('connection', (socket) => {
     if (Date.now() < player.frozenUntil) return; // frozen by a steal
     if (placePiece(player, pieceIdx, row, col)) {
       // If, after this move, the player is still mid-round but can't place any
-      // remaining piece anywhere, they're stuck — end the game.
+      // remaining piece anywhere, they're stuck — end the match early. The
+      // winner is still whoever has the most coins.
       if (player.phase === 'playing' && !hasAnyMove(player) && !room.over) {
-        const opp = opponent(room, player);
-        room.over = {
-          winnerBud: opp ? opp.bud : null,
-          coins: opp ? opp.coins : 0,
-          reasonCode: 'noMoves',
-          stuckBudId: player.bud ? player.bud.id : null,
-        };
-        room.players.forEach(p => { p.phase = 'done'; });
+        endGame(room, 'noMoves', { stuckBudId: player.bud ? player.bud.id : null });
+        return;
       }
       pushState(room);
     }
@@ -343,6 +362,7 @@ io.on('connection', (socket) => {
     if (waiting === socket) waiting = null;
     const room = rooms.get(socket.data.room);
     if (room && !room.over) {
+      clearTimeout(room.timer);
       room.over = { winnerBud: null, coins: 0, reasonCode: 'opponentLeft' };
       room.players.forEach(p => {
         p.phase = 'done';

@@ -124,6 +124,20 @@ h1 .bud { color: #3ddc97; }
 
 h2 { font-family: 'Luckiest Guy', cursive; letter-spacing: 1px; color: #fff; -webkit-text-stroke: 2px #2a1a4a; paint-order: stroke fill; }
 
+/* ---------- Match timer ---------- */
+.match-timer {
+  font-family: 'Luckiest Guy', cursive; font-size: 1.9rem; letter-spacing: 1px;
+  color: #fff; -webkit-text-stroke: 2px #2a1a4a; paint-order: stroke fill;
+  margin: 8px auto 0; display: inline-block; padding: 4px 22px; border-radius: 40px;
+  background: linear-gradient(180deg, #3ddc97, #20b277); border: 3px solid #fff;
+  box-shadow: 0 5px 0 rgba(0,0,0,.18);
+}
+.match-timer.urgent {
+  background: linear-gradient(180deg, #ff7aa2, #ff5470);
+  box-shadow: 0 5px 0 #c83a5b; animation: timerPulse .6s ease-in-out infinite;
+}
+@keyframes timerPulse { 50% { transform: scale(1.08); } }
+
 /* ---------- Boards ---------- */
 .boards { display: flex; gap: 28px; justify-content: center; flex-wrap: wrap; padding: 10px 14px 30px; }
 .board-col {

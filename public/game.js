@@ -21,7 +21,7 @@ const I18N = {
     target: 'TARGET',
     frozen: 'FROZEN',
     youBoardHint: 'Drag a piece from your tray onto the board to drop it. Fill a row or column to combo!',
-    oppBoardHint: 'Reach the goal first. Land a STEAL box to guess their bud!',
+    oppBoardHint: 'Score the most coins before the 2-minute timer runs out! Land a STEAL box to guess their bud.',
     reachedTarget: 'You reached the target! 🎉',
     chooseBox: 'Choose a box…',
     stealTitle: 'STEAL COINS 🥷',
@@ -39,8 +39,10 @@ const I18N = {
     gameOver: 'Game Over',
     youWin: 'You Win! 🏆',
     youLose: 'You Lose',
-    reachedGoalYou: (goal) => `You reached ${goal} coins first.`,
-    reachedGoalOpp: (who, goal) => `${who} reached ${goal} coins first.`,
+    draw: "It's a Draw!",
+    timeUpTie: "Time's up — you both finished on the same coins!",
+    wonByPoints: (coins) => `Time's up! You finished ahead with ${coins} coins. 🏆`,
+    lostByPoints: (coins) => `Time's up! Your opponent finished ahead with ${coins} coins.`,
     noMoves: (bud) => `${bud} has no moves left! 🪨`,
     boxCoins: (amount) => `+${amount} coins`,
     boxDouble: 'DOUBLE COINS',
@@ -68,7 +70,7 @@ const I18N = {
     target: '目标',
     frozen: '冻结',
     youBoardHint: '从托盘里拖一个方块放到棋盘上。填满一整行或一整列即可消除！',
-    oppBoardHint: '抢先达到目标。抽到“偷取”盒子就能猜对方的花蕾！',
+    oppBoardHint: '在 2 分钟倒计时结束前赢得最多金币！抽到“偷取”盒子来猜对方的花蕾。',
     reachedTarget: '你达到目标了！🎉',
     chooseBox: '选择一个盒子…',
     stealTitle: '偷取金币 🥷',
@@ -86,8 +88,10 @@ const I18N = {
     gameOver: '游戏结束',
     youWin: '你赢了！🏆',
     youLose: '你输了',
-    reachedGoalYou: (goal) => `你率先达到了 ${goal} 枚金币。`,
-    reachedGoalOpp: (who, goal) => `${who} 率先达到了 ${goal} 枚金币。`,
+    draw: '平局！',
+    timeUpTie: '时间到——你们的金币一样多！',
+    wonByPoints: (coins) => `时间到！你以 ${coins} 枚金币领先获胜。🏆`,
+    lostByPoints: (coins) => `时间到！对手以 ${coins} 枚金币领先获胜。`,
     noMoves: (bud) => `${bud} 无处可放了！🪨`,
     boxCoins: (amount) => `+${amount} 金币`,
     boxDouble: '金币翻倍',
@@ -246,6 +250,8 @@ function render() {
   $('oppCoins').textContent = opp ? opp.coins : 0;
   $('oppTarget').textContent = opp ? Math.max(0, opp.target) : '—';
 
+  syncMatchTimer(state.endsAt, state.over);
+
   drawBoard(yctx, youCanvas, me.grid, true);
   if (opp) drawBoard(octx, oppCanvas, opp.grid, false);
 
@@ -254,28 +260,51 @@ function render() {
   // Freeze overlay sync (in case we reconnect/refresh)
   if (me.frozenUntil && Date.now() < me.frozenUntil) startFreeze(me.frozenUntil);
 
-  // Reward boxes
-  if (me.pendingSteal) { showStealUI(me.pendingSteal); }
-  else { hideOverlay('steal'); }
-
-  if (me.pendingBoxes) { showBoxesUI(me.pendingBoxes); }
-  else { hideOverlay('boxes'); }
-
   if (state.over) {
+    // Game's done — clear any reward overlays and show the result.
+    hideOverlay('steal'); hideOverlay('boxes');
     const w = state.over.winnerBud;
     const iWon = !!(w && me.bud && w.id === me.bud.id);
     overContext = {
       kind: 'gameOver',
       iWon,
+      tie: !!state.over.tie,
       winnerBudId: w ? w.id : null,
       winnerBudName: w ? w.name : null,
+      winnerCoins: state.over.coins,
       reasonCode: state.over.reasonCode || null,
       stuckBudId: state.over.stuckBudId || null,
-      coinGoal: state.coinGoal,
     };
     renderOver();
     show('over', true);
+    return;
   }
+
+  // Reward boxes / steal (only while the match is live)
+  if (me.pendingSteal) { showStealUI(me.pendingSteal); }
+  else { hideOverlay('steal'); }
+
+  if (me.pendingBoxes) { showBoxesUI(me.pendingBoxes); }
+  else { hideOverlay('boxes'); }
+}
+
+// Countdown clock driven by the server's authoritative match end time.
+let matchEndsAt = null, matchTimerInt = null;
+function syncMatchTimer(endsAt, over) {
+  const el = $('matchTimer');
+  if (over || !endsAt) { clearInterval(matchTimerInt); matchTimerInt = null; matchEndsAt = null; return; }
+  if (endsAt === matchEndsAt && matchTimerInt) return; // already ticking this match
+  matchEndsAt = endsAt;
+  clearInterval(matchTimerInt);
+  const tick = () => {
+    const left = Math.max(0, matchEndsAt - Date.now());
+    const s = Math.ceil(left / 1000);
+    el.textContent = `⏱ ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    el.classList.toggle('urgent', left <= 15000);
+    if (left <= 0) { clearInterval(matchTimerInt); matchTimerInt = null; }
+  };
+  tick();
+  matchTimerInt = setInterval(tick, 250);
 }
 
 // Game-over / opponent-left copy is localized here so it can be re-rendered
@@ -289,14 +318,14 @@ function renderOver() {
     return;
   }
   const c = overContext;
-  $('overTitle').textContent = c.iWon ? t('youWin') : t('youLose');
+  $('overTitle').textContent = c.tie ? t('draw') : (c.iWon ? t('youWin') : t('youLose'));
   if (c.reasonCode === 'noMoves') {
-    $('overMsg').textContent = t('noMoves', budName(c.stuckBudId, ''));
-  } else if (c.iWon) {
-    $('overMsg').textContent = t('reachedGoalYou', c.coinGoal);
+    const base = t('noMoves', budName(c.stuckBudId, ''));
+    $('overMsg').textContent = c.tie ? `${base} ${t('timeUpTie')}` : base;
+  } else if (c.tie) {
+    $('overMsg').textContent = t('timeUpTie');
   } else {
-    const who = c.winnerBudId ? budName(c.winnerBudId, c.winnerBudName) : t('opponent');
-    $('overMsg').textContent = t('reachedGoalOpp', who, c.coinGoal);
+    $('overMsg').textContent = t(c.iWon ? 'wonByPoints' : 'lostByPoints', c.winnerCoins);
   }
 }
 
@@ -318,7 +347,7 @@ function drawBoard(ctx, canvas, grid, isSelf) {
   if (isSelf && selectedPiece >= 0 && hover && state.you.tray[selectedPiece]) {
     const piece = state.you.tray[selectedPiece];
     const ok = canPlace(piece, hover.row, hover.col, grid);
-    ctx.globalAlpha = 0.45;
+    ctx.globalAlpha = 0.6;
     piece.cells.forEach(([dr, dc], i) => {
       const r = hover.row + dr, c = hover.col + dc;
       if (r >= 0 && r < n && c >= 0 && c < n)
@@ -371,7 +400,7 @@ function drawTray(tray) {
       div.appendChild(cv);
       div.addEventListener('pointerdown', (e) => {
         e.preventDefault();
-        startDrag(idx, e.clientX, e.clientY);
+        startDrag(idx, e.clientX, e.clientY, e.pointerType);
       });
     }
     wrap.appendChild(div);
@@ -380,6 +409,7 @@ function drawTray(tray) {
 
 // ---------- Drag & drop (mouse + touch via Pointer Events) ----------
 let dragging = false;
+let dragPointerType = 'mouse';   // 'touch' lifts the piece above the finger
 
 // Floating sprite that follows the pointer while a piece is dragged off the tray.
 const dragGhost = document.createElement('canvas');
@@ -387,18 +417,43 @@ dragGhost.id = 'dragGhost';
 document.body.appendChild(dragGhost);
 const dgCtx = dragGhost.getContext('2d');
 
-// Map a pointer position (client coords) to a grid cell on the player's board,
-// accounting for the canvas being CSS-scaled down on small screens.
-function pointToCell(clientX, clientY) {
+function pieceSize(piece) {
+  return {
+    rows: Math.max(...piece.cells.map(c => c[0])) + 1,
+    cols: Math.max(...piece.cells.map(c => c[1])) + 1,
+  };
+}
+
+// How far (in cells) the piece floats above the pointer. On touch we lift it
+// clear of the finger so the landing spot stays visible; with a mouse the piece
+// just sits centred under the cursor.
+function liftCells(piece) {
+  if (dragPointerType !== 'touch') return 0;
+  return pieceSize(piece).rows / 2 + 1.2;
+}
+
+// The board cell the piece's top-left should snap to for a given pointer
+// position. Centres the piece on the pointer (minus the touch lift) so what you
+// see under your finger is exactly what drops — WYSIWYG, scale-aware.
+function computeOrigin(clientX, clientY) {
+  const piece = state && state.you.tray[selectedPiece];
+  if (!piece) return null;
   const rect = youCanvas.getBoundingClientRect();
   const cell = youCanvas.width / GRID;
   const x = (clientX - rect.left) * (youCanvas.width / rect.width);
   const y = (clientY - rect.top) * (youCanvas.height / rect.height);
-  return { row: Math.floor(y / cell), col: Math.floor(x / cell) };
+  const { rows, cols } = pieceSize(piece);
+  const col = Math.round(x / cell - cols / 2);
+  const row = Math.round(y / cell - rows / 2 - liftCells(piece));
+  return { row, col };
 }
-function overBoard(clientX, clientY) {
-  const r = youCanvas.getBoundingClientRect();
-  return clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
+
+// Does the piece, placed at this origin, overlap the board at all?
+function pieceOnBoard(piece, origin) {
+  return piece.cells.some(([dr, dc]) => {
+    const r = origin.row + dr, c = origin.col + dc;
+    return r >= 0 && r < GRID && c >= 0 && c < GRID;
+  });
 }
 function redrawSelf() { if (state) drawBoard(yctx, youCanvas, state.you.grid, true); }
 
@@ -418,20 +473,30 @@ function renderDragSprite(piece) {
   piece.cells.forEach(([r, c], i) =>
     drawCell(dgCtx, c * cellPx, r * cellPx, cellPx, state.you.bud.color, piece.gems[i]));
 }
+// Position the floating sprite to match the same centred + lifted anchor that
+// computeOrigin() uses, so the piece doesn't jump as it crosses onto the board.
 function moveGhost(clientX, clientY) {
-  // Anchor the sprite's top-left cell roughly under the pointer.
+  const piece = state && state.you.tray[selectedPiece];
+  if (!piece) return;
   const cellPx = youCanvas.getBoundingClientRect().width / GRID;
-  dragGhost.style.left = (clientX - cellPx / 2) + 'px';
-  dragGhost.style.top = (clientY - cellPx / 2) + 'px';
+  const { rows, cols } = pieceSize(piece);
+  dragGhost.style.left = (clientX - (cols / 2) * cellPx) + 'px';
+  dragGhost.style.top = (clientY - (rows / 2 + liftCells(piece)) * cellPx) + 'px';
 }
 
-function startDrag(idx, clientX, clientY) {
+function startDrag(idx, clientX, clientY, pointerType) {
   if (!state || !state.you.tray[idx] || state.you.phase !== 'playing') return;
+  if (state.you.frozenUntil && Date.now() < state.you.frozenUntil) return; // frozen
+  dragPointerType = pointerType || 'mouse';
   selectedPiece = idx; dragging = true;
   renderDragSprite(state.you.tray[idx]);
+  // Show the on-board preview immediately if the piece already overlaps the board.
+  const origin = computeOrigin(clientX, clientY);
+  hover = origin && pieceOnBoard(state.you.tray[idx], origin) ? origin : null;
   moveGhost(clientX, clientY);
-  dragGhost.style.display = 'block';
+  dragGhost.style.display = hover ? 'none' : 'block';
   drawTray(state.you.tray); // highlight the picked-up piece
+  redrawSelf();
   window.addEventListener('pointermove', onDragMove, { passive: false });
   window.addEventListener('pointerup', onDragEnd);
   window.addEventListener('pointercancel', onDragEnd);
@@ -440,8 +505,9 @@ function onDragMove(e) {
   if (!dragging) return;
   e.preventDefault();
   moveGhost(e.clientX, e.clientY);
-  if (overBoard(e.clientX, e.clientY)) {
-    hover = pointToCell(e.clientX, e.clientY);
+  const origin = computeOrigin(e.clientX, e.clientY);
+  if (origin && pieceOnBoard(state.you.tray[selectedPiece], origin)) {
+    hover = origin;
     dragGhost.style.display = 'none'; // on-board ghost shows the exact landing spot
   } else {
     hover = null;
@@ -456,10 +522,12 @@ function onDragEnd(e) {
   window.removeEventListener('pointerup', onDragEnd);
   window.removeEventListener('pointercancel', onDragEnd);
   dragGhost.style.display = 'none';
-  const dropOnBoard = overBoard(e.clientX, e.clientY);
-  if (dropOnBoard) {
-    const { row, col } = pointToCell(e.clientX, e.clientY);
-    socket.emit('place', { pieceIdx: selectedPiece, row, col });
+  const piece = state && state.you.tray[selectedPiece];
+  const origin = computeOrigin(e.clientX, e.clientY);
+  // Drop only when the piece fully fits on empty cells — the same rule the
+  // server enforces — so a near-miss simply returns the piece to the tray.
+  if (piece && origin && canPlace(piece, origin.row, origin.col, state.you.grid)) {
+    socket.emit('place', { pieceIdx: selectedPiece, row: origin.row, col: origin.col });
   }
   selectedPiece = -1; hover = null;
   redrawSelf();
