@@ -188,25 +188,53 @@ function drawTray(tray) {
   });
 }
 
-// ---------- Board input ----------
-function canvasToCell(e) {
+// ---------- Board input (mouse + touch) ----------
+// Map any pointer position (client coords) to a grid cell, accounting for the
+// canvas being CSS-scaled down on small screens.
+function pointToCell(clientX, clientY) {
   const rect = youCanvas.getBoundingClientRect();
   const cell = youCanvas.width / GRID;
-  const x = (e.clientX - rect.left) * (youCanvas.width / rect.width);
-  const y = (e.clientY - rect.top) * (youCanvas.height / rect.height);
+  const x = (clientX - rect.left) * (youCanvas.width / rect.width);
+  const y = (clientY - rect.top) * (youCanvas.height / rect.height);
   return { row: Math.floor(y / cell), col: Math.floor(x / cell) };
 }
+function redrawSelf() { if (state) drawBoard(yctx, youCanvas, state.you.grid, true); }
+
+// --- Mouse (desktop) ---
 youCanvas.addEventListener('mousemove', (e) => {
   if (selectedPiece < 0) return;
-  hover = canvasToCell(e); drawBoard(yctx, youCanvas, state.you.grid, true);
+  hover = pointToCell(e.clientX, e.clientY); redrawSelf();
 });
-youCanvas.addEventListener('mouseleave', () => { hover = null; if (state) drawBoard(yctx, youCanvas, state.you.grid, true); });
+youCanvas.addEventListener('mouseleave', () => { hover = null; redrawSelf(); });
 youCanvas.addEventListener('click', (e) => {
   if (selectedPiece < 0 || !state) return;
-  const { row, col } = canvasToCell(e);
+  const { row, col } = pointToCell(e.clientX, e.clientY);
+  placeSelected(row, col);
+});
+
+// --- Touch (mobile): drag to preview a ghost, lift to drop ---
+youCanvas.addEventListener('touchstart', (e) => {
+  if (selectedPiece < 0 || !state) return;
+  e.preventDefault();
+  const t = e.touches[0];
+  hover = pointToCell(t.clientX, t.clientY); redrawSelf();
+}, { passive: false });
+youCanvas.addEventListener('touchmove', (e) => {
+  if (selectedPiece < 0 || !state) return;
+  e.preventDefault();
+  const t = e.touches[0];
+  hover = pointToCell(t.clientX, t.clientY); redrawSelf();
+}, { passive: false });
+youCanvas.addEventListener('touchend', (e) => {
+  if (selectedPiece < 0 || !state || !hover) return;
+  e.preventDefault();
+  placeSelected(hover.row, hover.col);
+}, { passive: false });
+
+function placeSelected(row, col) {
   socket.emit('place', { pieceIdx: selectedPiece, row, col });
   selectedPiece = -1; hover = null;
-});
+}
 
 // ---------- Reward boxes ----------
 function showBoxesUI(boxes) {

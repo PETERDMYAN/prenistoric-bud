@@ -122,8 +122,12 @@ canvas {
     linear-gradient(160deg, #fff6fb, #eaf3ff);
   border-radius: 14px;
   box-shadow: inset 0 0 0 3px #fff, 0 6px 14px rgba(42,26,74,.25);
-  touch-action: none;
+  touch-action: none;            /* stop the page scrolling while dropping pieces */
+  display: block; margin: 0 auto;
+  width: 100%; height: auto;     /* scale to container; drawing buffer stays crisp */
 }
+#youCanvas { max-width: 400px; }
+#oppCanvas { max-width: 300px; }
 
 /* ---------- Tray ---------- */
 .tray { display: flex; gap: 14px; justify-content: center; margin-top: 14px; min-height: 90px; }
@@ -179,4 +183,23 @@ canvas {
 .box.opened {
   font-family: 'Baloo 2'; font-size: 1.15rem; cursor: default; transform: none;
   -webkit-text-stroke: 0;
+}
+
+/* ---------- Mobile / small screens ---------- */
+@media (max-width: 760px) {
+  .boards { flex-direction: column; align-items: center; gap: 18px; }
+  .board-col { width: 100%; max-width: 440px; }
+  /* On phones the opponent board is secondary — keep it compact */
+  .board-col.opp { max-width: 280px; opacity: .95; }
+  .bud-options { gap: 12px; }
+  .bud-card { width: 40vw; max-width: 150px; }
+  .box-options { gap: 12px; }
+  .box { height: 96px; font-size: 2.2rem; }
+  .panel { padding: 22px 18px; margin: 14px; }
+  .tray { gap: 10px; }
+  .big-btn { font-size: 1.15rem; padding: 12px 28px; }
+}
+@media (max-width: 420px) {
+  .board-col { padding: 10px 8px 14px; border-radius: 18px; }
+  .hint { font-size: .82rem; }
 }
