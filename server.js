@@ -16,7 +16,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ---- Game constants ----
 const GRID = 10; // 10x10 board
-const TARGET_START = 100; // gems needed to clear before reward boxes
+const TARGET_START = 45; // gems needed to clear before reward boxes
 const COIN_GOAL = 300; // first to this many coins wins
 const TRAY_SIZE = 3; // pieces offered at a time
 const FREEZE_MS = 15000; // steal freeze duration
