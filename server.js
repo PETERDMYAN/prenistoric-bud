@@ -315,7 +315,8 @@ io.on('connection', (socket) => {
         room.over = {
           winnerBud: opp ? opp.bud : null,
           coins: opp ? opp.coins : 0,
-          reason: `${player.bud.name} has no moves left! 🪨`,
+          reasonCode: 'noMoves',
+          stuckBudId: player.bud ? player.bud.id : null,
         };
         room.players.forEach(p => { p.phase = 'done'; });
       }
@@ -342,7 +343,7 @@ io.on('connection', (socket) => {
     if (waiting === socket) waiting = null;
     const room = rooms.get(socket.data.room);
     if (room && !room.over) {
-      room.over = { winnerBud: null, coins: 0, reason: 'opponent left' };
+      room.over = { winnerBud: null, coins: 0, reasonCode: 'opponentLeft' };
       room.players.forEach(p => {
         p.phase = 'done';
         if (p.socket !== socket && p.socket.connected) p.socket.emit('opponentLeft');
