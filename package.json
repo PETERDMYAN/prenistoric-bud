@@ -1,0 +1,14 @@
+{
+  "name": "prehistoric-bud",
+  "version": "1.0.0",
+  "description": "Online multiplayer block-puzzle game with a prehistoric theme",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  }
+}

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🦕 Prehistoric Bud</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1><span class="pre">PRE</span><span class="his">HIS</span><span class="tor">TOR</span><span class="ic">IC</span> <span class="bud">BUD 🌷</span></h1>
+  </header>
+
+  <!-- Lobby -->
+  <section id="lobby" class="screen active">
+    <p class="tagline">An online multiplayer block-puzzle from the dawn of time.</p>
+    <button id="playBtn" class="big-btn">Find a Match</button>
+    <p id="lobbyStatus" class="status"></p>
+  </section>
+
+  <!-- Bud selection -->
+  <section id="budSelect" class="screen">
+    <h2>Select your Bud</h2>
+    <div id="budOptions" class="bud-options"></div>
+    <p class="status">Pick a bud — your opponent won't see which one you chose!</p>
+  </section>
+
+  <!-- Game -->
+  <section id="game" class="screen">
+    <div class="boards">
+      <div class="board-col">
+        <div class="board-head">
+          <span id="youBud" class="bud-chip"></span>
+          <span class="label">YOU</span>
+          <span class="coins">🪙 <b id="youCoins">0</b></span>
+        </div>
+        <div class="target">TARGET <b id="youTarget">100</b> <span class="diamond">◆</span></div>
+        <canvas id="youCanvas" width="400" height="400"></canvas>
+        <div id="freezeOverlay" class="freeze-overlay hidden">❄️ FROZEN <span id="freezeTime"></span>s</div>
+        <div id="tray" class="tray"></div>
+        <p class="hint">Click a piece, move over the board, click to drop. Fill a row or column to combo!</p>
+      </div>
+      <div class="board-col opp">
+        <div class="board-head">
+          <span class="bud-chip mystery">❓</span>
+          <span class="label">OPPONENT</span>
+          <span class="coins">🪙 <b id="oppCoins">0</b></span>
+        </div>
+        <div class="target">TARGET <b id="oppTarget">100</b> <span class="diamond">◆</span></div>
+        <canvas id="oppCanvas" width="300" height="300"></canvas>
+        <p class="hint">Reach the goal first. Land a STEAL box to guess their bud!</p>
+      </div>
+    </div>
+    <div id="comboToast" class="combo-toast"></div>
+  </section>
+
+  <!-- Reward boxes -->
+  <section id="boxes" class="screen overlay">
+    <div class="panel">
+      <h2>You reached the target! 🎉</h2>
+      <p>Choose a box…</p>
+      <div id="boxOptions" class="box-options"></div>
+    </div>
+  </section>
+
+  <!-- Steal guessing -->
+  <section id="steal" class="screen overlay">
+    <div class="panel">
+      <h2>STEAL COINS 🥷</h2>
+      <p>Guess your opponent's bud. Correct = steal half their coins + freeze them 15s!</p>
+      <div id="stealOptions" class="bud-options"></div>
+    </div>
+  </section>
+
+  <!-- Game over -->
+  <section id="over" class="screen overlay">
+    <div class="panel">
+      <h2 id="overTitle">Game Over</h2>
+      <p id="overMsg"></p>
+      <button onclick="location.reload()" class="big-btn">Play Again</button>
+    </div>
+  </section>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
