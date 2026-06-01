@@ -55,6 +55,18 @@ h1 .bud { color: #3ddc97; }
 .tagline { color: #4a2f7a; font-weight: 700; font-size: 1.1rem; }
 .status { color: #2a1a4a; font-weight: 700; min-height: 1.4em; text-shadow: 0 1px 0 rgba(255,255,255,.5); }
 
+/* ---------- Name input ---------- */
+.name-input {
+  font-family: 'Baloo 2'; font-size: 1.05rem; font-weight: 700;
+  text-align: center; color: #2a1a4a;
+  padding: 11px 20px; margin-top: 18px; width: min(280px, 80vw);
+  background: rgba(255,255,255,.92); border: 4px solid #fff; border-radius: 50px;
+  box-shadow: 0 5px 0 rgba(122,90,248,.3), 0 8px 16px rgba(0,0,0,.15);
+  outline: none; transition: .12s;
+}
+.name-input::placeholder { color: #9a86c4; font-weight: 600; }
+.name-input:focus { border-color: #ffd23f; box-shadow: 0 5px 0 #e0b400, 0 8px 16px rgba(0,0,0,.18); }
+
 /* ---------- Buttons ---------- */
 .big-btn {
   font-family: 'Baloo 2'; font-size: 1.3rem; font-weight: 800;

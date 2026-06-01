@@ -88,6 +88,7 @@ function emptyGrid() {
 function makePlayer(socket) {
   return {
     socket,
+    name: socket.data.name || 'Player',
     bud: null,
     grid: emptyGrid(),
     tray: newTray(),
@@ -111,6 +112,7 @@ function opponent(room, player) {
 // Public view of a player's state to send to a client (self or opponent).
 function playerView(p, isSelf) {
   return {
+    name: p.name,
     bud: p.bud,
     coins: p.coins,
     target: p.target,
@@ -268,7 +270,10 @@ function finishBox(room, player) {
 }
 
 io.on('connection', (socket) => {
-  socket.on('join', () => {
+  socket.on('join', (data) => {
+    // Optional player name (sanitized, max 16 chars). Falls back to "Player".
+    const name = ((data && data.name) || '').toString().replace(/[<>]/g, '').trim().slice(0, 16);
+    socket.data.name = name || 'Player';
     if (waiting && waiting.connected && waiting !== socket) {
       const roomId = 'r' + (++roomSeq);
       const p1 = makePlayer(waiting);

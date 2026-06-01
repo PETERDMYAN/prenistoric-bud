@@ -14,6 +14,9 @@
   <!-- Lobby -->
   <section id="lobby" class="screen active">
     <p class="tagline">An online multiplayer block-puzzle from the dawn of time.</p>
+    <input id="nameInput" class="name-input" type="text" maxlength="16"
+           placeholder="Your name (optional)" autocomplete="off" />
+    <br />
     <button id="playBtn" class="big-btn">Find a Match</button>
     <p id="lobbyStatus" class="status"></p>
     <div class="credits">
@@ -36,7 +39,7 @@
       <div class="board-col">
         <div class="board-head">
           <span id="youBud" class="bud-chip"></span>
-          <span class="label">YOU</span>
+          <span id="youLabel" class="label">YOU</span>
           <span class="coins">🪙 <b id="youCoins">0</b></span>
         </div>
         <div class="target">TARGET <b id="youTarget">30</b> <span class="diamond">◆</span></div>
@@ -48,7 +51,7 @@
       <div class="board-col opp">
         <div class="board-head">
           <span class="bud-chip mystery">❓</span>
-          <span class="label">OPPONENT</span>
+          <span id="oppLabel" class="label">OPPONENT</span>
           <span class="coins">🪙 <b id="oppCoins">0</b></span>
         </div>
         <div class="target">TARGET <b id="oppTarget">30</b> <span class="diamond">◆</span></div>

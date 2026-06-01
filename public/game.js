@@ -19,7 +19,11 @@ const youCanvas = $('youCanvas'), yctx = youCanvas.getContext('2d');
 const oppCanvas = $('oppCanvas'), octx = oppCanvas.getContext('2d');
 
 // ---------- Lobby ----------
-$('playBtn').onclick = () => { socket.emit('join'); $('lobbyStatus').textContent = 'Searching for an opponent…'; };
+$('playBtn').onclick = () => {
+  const name = ($('nameInput').value || '').trim();
+  socket.emit('join', { name });
+  $('lobbyStatus').textContent = 'Searching for an opponent…';
+};
 socket.on('waiting', () => { $('lobbyStatus').textContent = 'Waiting for another player to join…'; });
 
 socket.on('matched', ({ budOptions }) => {
@@ -82,6 +86,8 @@ function render() {
   show('game');
   // headers
   if (me.bud) $('youBud').textContent = me.bud.emoji;
+  $('youLabel').textContent = (me.name && me.name !== 'Player') ? me.name : 'YOU';
+  if (opp) $('oppLabel').textContent = (opp.name && opp.name !== 'Player') ? opp.name : 'OPPONENT';
   $('youCoins').textContent = me.coins;
   $('youTarget').textContent = Math.max(0, me.target);
   $('oppCoins').textContent = opp ? opp.coins : 0;
