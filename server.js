@@ -16,7 +16,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ---- Game constants ----
 const GRID = 10; // 10x10 board
-const TARGET_START = 45; // gems needed to clear before reward boxes
+const TARGET_START = 30; // gems needed to clear before reward boxes
 const COIN_GOAL = 300; // first to this many coins wins
 const TRAY_SIZE = 3; // pieces offered at a time
 const FREEZE_MS = 15000; // steal freeze duration
@@ -157,6 +157,24 @@ function placePiece(player, pieceIdx, originR, originC) {
   return true;
 }
 
+// Can the player legally place ANY remaining tray piece anywhere on the board?
+function hasAnyMove(player) {
+  for (const piece of player.tray) {
+    if (!piece) continue;
+    for (let r = 0; r < GRID; r++) {
+      for (let c = 0; c < GRID; c++) {
+        let fits = true;
+        for (const [dr, dc] of piece.cells) {
+          const rr = r + dr, cc = c + dc;
+          if (rr < 0 || rr >= GRID || cc < 0 || cc >= GRID || player.grid[rr][cc]) { fits = false; break; }
+        }
+        if (fits) return true;
+      }
+    }
+  }
+  return false;
+}
+
 // Clear any full rows/columns; subtract their gems from the target.
 function resolveCombos(player) {
   const g = player.grid;
@@ -283,7 +301,20 @@ io.on('connection', (socket) => {
     const player = socket.data.player;
     if (!room || !player || player.phase !== 'playing' || room.over) return;
     if (Date.now() < player.frozenUntil) return; // frozen by a steal
-    if (placePiece(player, pieceIdx, row, col)) pushState(room);
+    if (placePiece(player, pieceIdx, row, col)) {
+      // If, after this move, the player is still mid-round but can't place any
+      // remaining piece anywhere, they're stuck — end the game.
+      if (player.phase === 'playing' && !hasAnyMove(player) && !room.over) {
+        const opp = opponent(room, player);
+        room.over = {
+          winnerBud: opp ? opp.bud : null,
+          coins: opp ? opp.coins : 0,
+          reason: `${player.bud.name} has no moves left! 🪨`,
+        };
+        room.players.forEach(p => { p.phase = 'done'; });
+      }
+      pushState(room);
+    }
   });
 
   socket.on('chooseBox', ({ boxIdx }) => {
