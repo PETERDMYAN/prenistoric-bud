@@ -5,7 +5,7 @@
 **▶️ Play live:** **[prehistoric-bud.onrender.com](https://prehistoric-bud.onrender.com)**
 *(Free host — the first load after a quiet spell takes ~30–60s to wake up.)*
 
-Pick your dino **bud**, drop blocks on a 10×10 grid, clear lines to drain your target, then crack open mystery boxes — and if you land a **Steal**, guess your rival's bud to rob half their coins and freeze them solid. First to **300 coins** wins.
+Pick your magical flower **bud**, drop blocks on a 10×10 grid, clear lines to drain your target, then crack open mystery boxes — and if you land a **Steal**, guess your rival's bud to rob half their coins and freeze them solid. First to **300 coins** wins.
 
 ---
 
@@ -13,7 +13,7 @@ Pick your dino **bud**, drop blocks on a 10×10 grid, clear lines to drain your 
 
 It's a **2-player** game — open the link in two browsers (or share it with a friend) and both click **Find a Match** to get paired.
 
-1. **Select a Bud** — choose 1 of 3 dinos. Your opponent *can't see which one you picked*. 🤫
+1. **Select a Bud** — choose 1 of 3 magical flowers. Your opponent *can't see which one you picked*. 🤫
 2. **Place blocks** — the system hands you 4-cell blocks, each holding **2–4 gems** 💎. Click a piece, move over your board, and click to drop it.
 3. **Combo!** — fill a whole **row or column** to clear it. The gems on the cleared blocks are **subtracted from your target**. Chain multiple lines at once for bigger combos.
 4. **Mystery boxes** — reach the target and pick **1 of 4 boxes**:

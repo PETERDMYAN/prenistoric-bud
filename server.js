@@ -21,14 +21,15 @@ const COIN_GOAL = 300; // first to this many coins wins
 const TRAY_SIZE = 3; // pieces offered at a time
 const FREEZE_MS = 15000; // steal freeze duration
 
-// The pool of "buds" players can be. Used for selection and for stealing guesses.
+// The pool of magical flower "buds" players can be.
+// Used for selection and for the steal-coins guessing game.
 const BUDS = [
-  { id: 'rex', name: 'Rexy', emoji: '🦖', color: '#e74c3c' },
-  { id: 'bronto', name: 'Bronto', emoji: '🦕', color: '#27ae60' },
-  { id: 'raptor', name: 'Raptor', emoji: '🦎', color: '#8e44ad' },
-  { id: 'tri', name: 'Tri', emoji: '🦏', color: '#2980b9' },
-  { id: 'dactyl', name: 'Dactyl', emoji: '🦅', color: '#e67e22' },
-  { id: 'sauro', name: 'Sauro', emoji: '🐊', color: '#16a085' },
+  { id: 'pyro',   name: 'Pyrobloom',  emoji: '🌹', color: '#e74c3c' },
+  { id: 'aqua',   name: 'Aqualily',   emoji: '🪷', color: '#2980b9' },
+  { id: 'sun',    name: 'Sunpetal',   emoji: '🌻', color: '#f1c40f' },
+  { id: 'mystic', name: 'Mystivine',  emoji: '🌸', color: '#b06bff' },
+  { id: 'tulip',  name: 'Tulipuff',   emoji: '🌷', color: '#e84393' },
+  { id: 'hibis',  name: 'Hibisflare', emoji: '🌺', color: '#16a085' },
 ];
 
 // Tetromino shapes (4 cells each). No rotation — random orientation on spawn.
