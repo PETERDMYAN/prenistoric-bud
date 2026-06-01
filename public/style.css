@@ -26,6 +26,23 @@ body {
   background-attachment: fixed;
 }
 
+/* ---------- Language switch ---------- */
+.lang-switch {
+  position: absolute; top: 14px; right: 14px;
+  display: flex; gap: 6px; z-index: 30;
+}
+.lang-btn {
+  font-family: 'Baloo 2', system-ui, sans-serif; font-weight: 800; font-size: .9rem;
+  padding: 7px 14px; cursor: pointer; color: #4a2f7a;
+  background: rgba(255,255,255,.85); border: 3px solid #fff; border-radius: 50px;
+  box-shadow: 0 3px 0 rgba(122,90,248,.3); transition: .1s;
+}
+.lang-btn:hover { transform: translateY(-2px); filter: brightness(1.04); }
+.lang-btn.active {
+  color: #fff; background: linear-gradient(180deg, #b06bff, #8e44ad);
+  box-shadow: 0 3px 0 #6c2fb0;
+}
+
 /* ---------- Title (Pokémon-logo style) ---------- */
 header h1 {
   font-family: 'Luckiest Guy', cursive;
