@@ -5,7 +5,7 @@
 **▶️ Play live:** **[prehistoric-bud.onrender.com](https://prehistoric-bud.onrender.com)**
 *(Free host — the first load after a quiet spell takes ~30–60s to wake up.)*
 
-Pick your magical flower **bud**, drop blocks on a 10×10 grid, clear lines to drain your target, then crack open mystery boxes — and if you land a **Steal**, guess your rival's bud to rob half their coins and freeze them solid. First to **300 coins** wins.
+Pick your magical flower **bud**, drop blocks on a 10×10 grid, clear lines to drain your target, then crack open mystery boxes — and if you land a **Steal**, guess your rival's bud to rob half their coins and freeze them solid. You've got **2 minutes** — whoever has the **most coins** when the clock runs out wins.
 
 ---
 
@@ -14,7 +14,7 @@ Pick your magical flower **bud**, drop blocks on a 10×10 grid, clear lines to d
 It's a **2-player** game — open the link in two browsers (or share it with a friend) and both click **Find a Match** to get paired.
 
 1. **Select a Bud** — choose 1 of 3 magical flowers. Your opponent *can't see which one you picked*. 🤫
-2. **Place blocks** — the system hands you 4-cell blocks, each holding **2–4 gems** 💎. Click a piece, move over your board, and click to drop it.
+2. **Place blocks** — the system hands you 4-cell blocks, each holding **2–4 gems** 💎. Drag a piece from your tray onto your board; it snaps to the grid where you let go.
 3. **Combo!** — fill a whole **row or column** to clear it. The gems on the cleared blocks are **subtracted from your target**. Chain multiple lines at once for bigger combos.
 4. **Mystery boxes** — reach the target and pick **1 of 4 boxes**:
    | Reward | Effect |
@@ -23,7 +23,7 @@ It's a **2-player** game — open the link in two browsers (or share it with a f
    | 🔵 `DOUBLE` / `TRIPLE COINS` | Multiply your coins |
    | 🟣 `STEAL COINS` | Guess the opponent's bud → steal half their coins **+ freeze them 15s** |
    | 🔴 `NOTHING! −15 coins` | Womp womp |
-5. **Win** — first bud to **300 coins** takes the prize. 🏆
+5. **Win** — when the **2-minute timer** runs out, the bud with the **most coins** takes the prize. Run out of room to place pieces and the match ends early. 🏆
 
 ---
 
