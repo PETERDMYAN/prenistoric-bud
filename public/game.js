@@ -182,15 +182,26 @@ function drawTray(tray) {
       const c2 = cv.getContext('2d');
       piece.cells.forEach(([r, cc], i) => drawCell(c2, cc * s, r * s, s, state.you.bud.color, piece.gems[i]));
       div.appendChild(cv);
-      div.onclick = () => { selectedPiece = (selectedPiece === idx ? -1 : idx); render(); };
+      div.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        startDrag(idx, e.clientX, e.clientY);
+      });
     }
     wrap.appendChild(div);
   });
 }
 
-// ---------- Board input (mouse + touch) ----------
-// Map any pointer position (client coords) to a grid cell, accounting for the
-// canvas being CSS-scaled down on small screens.
+// ---------- Drag & drop (mouse + touch via Pointer Events) ----------
+let dragging = false;
+
+// Floating sprite that follows the pointer while a piece is dragged off the tray.
+const dragGhost = document.createElement('canvas');
+dragGhost.id = 'dragGhost';
+document.body.appendChild(dragGhost);
+const dgCtx = dragGhost.getContext('2d');
+
+// Map a pointer position (client coords) to a grid cell on the player's board,
+// accounting for the canvas being CSS-scaled down on small screens.
 function pointToCell(clientX, clientY) {
   const rect = youCanvas.getBoundingClientRect();
   const cell = youCanvas.width / GRID;
@@ -198,42 +209,74 @@ function pointToCell(clientX, clientY) {
   const y = (clientY - rect.top) * (youCanvas.height / rect.height);
   return { row: Math.floor(y / cell), col: Math.floor(x / cell) };
 }
+function overBoard(clientX, clientY) {
+  const r = youCanvas.getBoundingClientRect();
+  return clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
+}
 function redrawSelf() { if (state) drawBoard(yctx, youCanvas, state.you.grid, true); }
 
-// --- Mouse (desktop) ---
-youCanvas.addEventListener('mousemove', (e) => {
-  if (selectedPiece < 0) return;
-  hover = pointToCell(e.clientX, e.clientY); redrawSelf();
-});
-youCanvas.addEventListener('mouseleave', () => { hover = null; redrawSelf(); });
-youCanvas.addEventListener('click', (e) => {
-  if (selectedPiece < 0 || !state) return;
-  const { row, col } = pointToCell(e.clientX, e.clientY);
-  placeSelected(row, col);
-});
+// Render the dragged piece into the floating ghost canvas, sized to match the
+// board's on-screen cell size so it lines up with where it will drop.
+function renderDragSprite(piece) {
+  const cellPx = youCanvas.getBoundingClientRect().width / GRID;
+  const maxR = Math.max(...piece.cells.map(c => c[0])) + 1;
+  const maxC = Math.max(...piece.cells.map(c => c[1])) + 1;
+  const dpr = window.devicePixelRatio || 1;
+  dragGhost.width = maxC * cellPx * dpr;
+  dragGhost.height = maxR * cellPx * dpr;
+  dragGhost.style.width = maxC * cellPx + 'px';
+  dragGhost.style.height = maxR * cellPx + 'px';
+  dgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  dgCtx.clearRect(0, 0, dragGhost.width, dragGhost.height);
+  piece.cells.forEach(([r, c], i) =>
+    drawCell(dgCtx, c * cellPx, r * cellPx, cellPx, state.you.bud.color, piece.gems[i]));
+}
+function moveGhost(clientX, clientY) {
+  // Anchor the sprite's top-left cell roughly under the pointer.
+  const cellPx = youCanvas.getBoundingClientRect().width / GRID;
+  dragGhost.style.left = (clientX - cellPx / 2) + 'px';
+  dragGhost.style.top = (clientY - cellPx / 2) + 'px';
+}
 
-// --- Touch (mobile): drag to preview a ghost, lift to drop ---
-youCanvas.addEventListener('touchstart', (e) => {
-  if (selectedPiece < 0 || !state) return;
+function startDrag(idx, clientX, clientY) {
+  if (!state || !state.you.tray[idx] || state.you.phase !== 'playing') return;
+  selectedPiece = idx; dragging = true;
+  renderDragSprite(state.you.tray[idx]);
+  moveGhost(clientX, clientY);
+  dragGhost.style.display = 'block';
+  drawTray(state.you.tray); // highlight the picked-up piece
+  window.addEventListener('pointermove', onDragMove, { passive: false });
+  window.addEventListener('pointerup', onDragEnd);
+  window.addEventListener('pointercancel', onDragEnd);
+}
+function onDragMove(e) {
+  if (!dragging) return;
   e.preventDefault();
-  const t = e.touches[0];
-  hover = pointToCell(t.clientX, t.clientY); redrawSelf();
-}, { passive: false });
-youCanvas.addEventListener('touchmove', (e) => {
-  if (selectedPiece < 0 || !state) return;
-  e.preventDefault();
-  const t = e.touches[0];
-  hover = pointToCell(t.clientX, t.clientY); redrawSelf();
-}, { passive: false });
-youCanvas.addEventListener('touchend', (e) => {
-  if (selectedPiece < 0 || !state || !hover) return;
-  e.preventDefault();
-  placeSelected(hover.row, hover.col);
-}, { passive: false });
-
-function placeSelected(row, col) {
-  socket.emit('place', { pieceIdx: selectedPiece, row, col });
+  moveGhost(e.clientX, e.clientY);
+  if (overBoard(e.clientX, e.clientY)) {
+    hover = pointToCell(e.clientX, e.clientY);
+    dragGhost.style.display = 'none'; // on-board ghost shows the exact landing spot
+  } else {
+    hover = null;
+    dragGhost.style.display = 'block';
+  }
+  redrawSelf();
+}
+function onDragEnd(e) {
+  if (!dragging) return;
+  dragging = false;
+  window.removeEventListener('pointermove', onDragMove);
+  window.removeEventListener('pointerup', onDragEnd);
+  window.removeEventListener('pointercancel', onDragEnd);
+  dragGhost.style.display = 'none';
+  const dropOnBoard = overBoard(e.clientX, e.clientY);
+  if (dropOnBoard) {
+    const { row, col } = pointToCell(e.clientX, e.clientY);
+    socket.emit('place', { pieceIdx: selectedPiece, row, col });
+  }
   selectedPiece = -1; hover = null;
+  redrawSelf();
+  if (state) drawTray(state.you.tray); // clear pick-up highlight if drop missed
 }
 
 // ---------- Reward boxes ----------

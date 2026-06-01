@@ -133,9 +133,18 @@ canvas {
 .tray { display: flex; gap: 14px; justify-content: center; margin-top: 14px; min-height: 90px; }
 .tray-piece {
   background: linear-gradient(180deg, #ffffff, #f0e9ff);
-  border-radius: 14px; padding: 8px; cursor: pointer;
+  border-radius: 14px; padding: 8px; cursor: grab;
   border: 4px solid transparent; box-shadow: 0 5px 0 rgba(122,90,248,.3);
-  transition: .12s;
+  transition: .12s; touch-action: none; /* let us drag without the page scrolling */
+}
+.tray-piece:active { cursor: grabbing; }
+
+/* Floating piece that follows the pointer during a drag */
+#dragGhost {
+  position: fixed; left: 0; top: 0; z-index: 50;
+  pointer-events: none; display: none;
+  filter: drop-shadow(0 6px 8px rgba(0,0,0,.35));
+  opacity: .9;
 }
 .tray-piece:hover { transform: translateY(-3px); }
 .tray-piece.selected { border-color: #ffd23f; box-shadow: 0 5px 0 #e0b400; }
