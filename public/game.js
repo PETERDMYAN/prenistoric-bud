@@ -7,11 +7,14 @@ const socket = io();
 const I18N = {
   en: {
     docTitle: '🦕 Prehistoric Bud',
+    titleHTML: '<span class="pre">PRE</span><span class="his">HIS</span><span class="tor">TOR</span><span class="ic">IC</span> <span class="bud">BUD 🌷</span>',
     tagline: 'An online multiplayer block-puzzle from the dawn of time.',
     namePlaceholder: 'Your name (optional)',
     findMatch: 'Find a Match',
     viewGithub: '⭐ View on GitHub',
     createdBy: 'Created by',
+    author1: 'Jaden Yan Peihan',
+    author2: 'Peter Yan',
     madeOn: 'Made on June 1, 2026',
     selectBud: 'Select your Bud',
     budSelectHint: "Pick a bud — your opponent won't see which one you chose!",
@@ -51,11 +54,14 @@ const I18N = {
   },
   zh: {
     docTitle: '🦕 史前花蕾',
+    titleHTML: '<span class="pre">史</span><span class="his">前</span><span class="tor">花</span><span class="bud">蕾</span> 🌷',
     tagline: '一款来自远古时代的在线多人方块拼图游戏。',
     namePlaceholder: '你的名字（可选）',
     findMatch: '寻找对手',
     viewGithub: '⭐ 在 GitHub 上查看',
     createdBy: '作者',
+    author1: '颜培瀚（果果）',
+    author2: '颜东明（明明）',
     madeOn: '制作于 2026 年 6 月 1 日',
     selectBud: '选择你的花蕾',
     budSelectHint: '挑一个花蕾——对手看不到你选了哪一个！',
@@ -122,6 +128,7 @@ function boxLabel(box) {
 function applyI18n() {
   document.documentElement.lang = lang === 'zh' ? 'zh' : 'en';
   document.title = t('docTitle');
+  $('title').innerHTML = t('titleHTML'); // logo keeps its per-character colors
   document.querySelectorAll('[data-i18n]').forEach(el => {
     el.textContent = t(el.getAttribute('data-i18n'));
   });
